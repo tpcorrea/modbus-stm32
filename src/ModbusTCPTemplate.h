@@ -214,7 +214,7 @@ void ModbusTCPTemplate<SERVER, CLIENT>::task() {
 		CLIENT c;
 		// WiFiServer.available() == Ethernet.accept() and should wrapped to get code to be compatible with Ethernet library (See ModbusTCP.h code).
 		// WiFiServer.available() != Ethernet.available() internally
-		while (millis() - taskStart < MODBUSIP_MAX_READMS && (c = tcpserver->accept())) {
+		while (millis() - taskStart < MODBUSIP_MAX_READMS && (c = tcpserver->available())) {
 #if defined(MODBUSIP_DEBUG)
 			Serial.println("IP: Accepted");
 #endif
@@ -244,7 +244,7 @@ void ModbusTCPTemplate<SERVER, CLIENT>::task() {
 					Serial.print("IP: Conn ");
 					Serial.println(n);
 #endif
-					continue; // while
+					break;; // while
 				}
 			}
 			// Close connection if callback returns false or MODBUSIP_MAX_CLIENTS reached
@@ -260,7 +260,7 @@ void ModbusTCPTemplate<SERVER, CLIENT>::task() {
 			Serial.print(": Bytes available ");
 			Serial.println(tcpclient[n]->available());
 #endif
-			tcpclient[n]->readBytes(_MBAP.raw, sizeof(_MBAP.raw));	// Get MBAP
+			tcpclient[n]->read(_MBAP.raw, sizeof(_MBAP.raw));	// Get MBAP
 		
 			if (__swap_16(_MBAP.protocolId) != 0) {   // Check if MODBUSIP packet. __swap is usless there.
 				while (tcpclient[n]->available())	// Drop all incoming if wrong packet
@@ -284,7 +284,7 @@ void ModbusTCPTemplate<SERVER, CLIENT>::task() {
 						tcpclient[n]->read();
 				}
 				else {
-					if (tcpclient[n]->readBytes(_frame, _len) < _len) {	// Try to read MODBUS frame
+					if (tcpclient[n]->read(_frame, _len) < _len) {	// Try to read MODBUS frame
 						exceptionResponse((FunctionCode)_frame[0], EX_ILLEGAL_VALUE);
 						//while (tcpclient[n]->available())	// Drop all incoming (if any)
 						//	tcpclient[n]->read();
